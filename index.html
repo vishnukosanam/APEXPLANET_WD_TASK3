@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weather Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+function snowEffect() {
+  setInterval(() => {
+    confetti({
+      particleCount: 2,
+      angle: 90,
+      spread: 55,
+      startVelocity: 10,
+      origin: { x: Math.random(), y: 0 },
+      colors: ['#fff'],
+      shapes: ['circle'],
+      gravity: 0.2,
+      scalar: 0.8,
+      ticks: 200
+    });
+  }, 120);
+}
+snowEffect();
+</script>
+<canvas id="rain-canvas"></canvas>
+<script>
+const canvas = document.getElementById('rain-canvas');
+const ctx = canvas.getContext('2d');
+canvas.style.position = 'fixed';
+canvas.style.top = 0;
+canvas.style.left = 0;
+canvas.style.width = '100vw';
+canvas.style.height = '100vh';
+canvas.style.pointerEvents = 'none';
+canvas.style.zIndex = 0;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const raindrops = [];
+for (let i = 0; i < 120; i++) {
+  raindrops.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    l: Math.random() * 20 + 10,
+    xs: Math.random() * 2 - 1,
+    ys: Math.random() * 10 + 10
+  });
+}
+
+function drawRain() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.strokeStyle = 'rgba(174,194,224,0.5)';
+  ctx.lineWidth = 1.2;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < raindrops.length; i++) {
+    const r = raindrops[i];
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x + r.xs, r.y + r.l);
+    ctx.stroke();
+  }
+  moveRain();
+  requestAnimationFrame(drawRain);
+}
+
+function moveRain() {
+  for (let i = 0; i < raindrops.length; i++) {
+    const r = raindrops[i];
+    r.x += r.xs;
+    r.y += r.ys;
+    if (r.y > canvas.height) {
+      r.x = Math.random() * canvas.width;
+      r.y = -20;
+    }
+  }
+}
+drawRain();
+</script>
+<canvas id="cloud-canvas"></canvas>
+<script>
+const cloudCanvas = document.getElementById('cloud-canvas');
+const cloudCtx = cloudCanvas.getContext('2d');
+cloudCanvas.style.position = 'fixed';
+cloudCanvas.style.top = 0;
+cloudCanvas.style.left = 0;
+cloudCanvas.style.width = '100vw';
+cloudCanvas.style.height = '100vh';
+cloudCanvas.style.pointerEvents = 'none';
+cloudCanvas.style.zIndex = 0;
+
+function resizeCloudCanvas() {
+  cloudCanvas.width = window.innerWidth;
+  cloudCanvas.height = window.innerHeight;
+}
+resizeCloudCanvas();
+window.addEventListener('resize', resizeCloudCanvas);
+
+function drawCloud(x, y, scale) {
+  cloudCtx.save();
+  cloudCtx.translate(x, y);
+  cloudCtx.scale(scale, scale);
+  cloudCtx.beginPath();
+  cloudCtx.arc(0, 0, 30, Math.PI * 0.5, Math.PI * 1.5);
+  cloudCtx.arc(40, -20, 40, Math.PI * 1, Math.PI * 1.85);
+  cloudCtx.arc(80, 0, 30, Math.PI * 1.37, Math.PI * 0.37, true);
+  cloudCtx.closePath();
+  cloudCtx.fillStyle = 'rgba(255,255,255,0.7)';
+  cloudCtx.shadowColor = '#bbb';
+  cloudCtx.shadowBlur = 20;
+  cloudCtx.fill();
+  cloudCtx.restore();
+}
+
+const clouds = [];
+for (let i = 0; i < 6; i++) {
+  clouds.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight * 0.4,
+    scale: Math.random() * 0.6 + 0.7,
+    speed: Math.random() * 0.2 + 0.05
+  });
+}
+
+function animateClouds() {
+  cloudCtx.clearRect(0, 0, cloudCanvas.width, cloudCanvas.height);
+  for (let c of clouds) {
+    drawCloud(c.x, c.y, c.scale);
+    c.x += c.speed;
+    if (c.x > cloudCanvas.width + 100) {
+      c.x = -120;
+      c.y = Math.random() * window.innerHeight * 0.4;
+      c.scale = Math.random() * 0.6 + 0.7;
+      c.speed = Math.random() * 0.2 + 0.05;
+    }
+  }
+  requestAnimationFrame(animateClouds);
+}
+animateClouds();
+</script>
+<script>
+function lightningStrike() {
+  const ctx = cloudCtx;
+  const w = cloudCanvas.width;
+  const h = cloudCanvas.height;
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  ctx.restore();
+  setTimeout(() => {
+    ctx.clearRect(0, 0, w, h);
+  }, 80);
+}
+
+// Randomly trigger lightning every 5-15 seconds
+setInterval(() => {
+  if (Math.random() < 0.5) lightningStrike();
+}, Math.random() * 10000 + 5000);
+</script>
+<body>
+  <div class="container">
+    <h1>Weather Dashboard</h1>
+    <div class="search-box">
+      <label for="city-input" class="visually-hidden">City Name</label>
+      <input type="text" id="city-input" placeholder="Enter city name" aria-label="City Name" />
+      <button type="button" id="get-weather-btn">Get Weather</button>
+    </div>
+    <div id="error-message" class="error hidden" aria-live="polite"></div>
+    <div id="weather-result" class="weather-card hidden" aria-live="polite">
+      <h2 id="city-name"></h2>
+      <p><strong>Description:</strong> <span id="description"></span></p>
+      <p><strong>Temperature:</strong> <span id="temp"></span> °C</p>
+      <p><strong>Humidity:</strong> <span id="humidity"></span>%</p>
+      <p><strong>Wind Speed:</strong> <span id="wind"></span> m/s</p>
+    </div>
+    <div class="tips-section">
+      <h3>Weather Tips</h3>
+      <ul id="weather-tips">
+        <!-- Tips will be inserted here -->
+      </ul>
+    </div>
+    <div class="fact-section">
+      <h3>Fun Weather Fact</h3>
+      <p id="weather-fact"></p>
+      <button id="new-fact-btn" type="button">Show Another Fact</button>
+    </div>
+  </div>
+  <div id="particles-js"></div>
+  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script>
+    particlesJS("particles-js", {
+      "particles": {
+        "number": { "value": 60 },
+        "size": { "value": 3 },
+        "color": { "value": "#ffffff" },
+        "opacity": { "value": 0.3 },
+        "move": { "speed": 1 }
+      },
+      "interactivity": {
+        "events": { "onhover": { "enable": true, "mode": "repulse" } }
+      }
+    });
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
